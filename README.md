@@ -1,6 +1,6 @@
 # SQLiteKit
 
-Small Swift wrapper for accessing a `.sqlite3` database in a thread safe manner. 
+Simple Swift wrapper for accessing a `.sqlite3` database in a thread safe manner. 
 
 ## Example
 
