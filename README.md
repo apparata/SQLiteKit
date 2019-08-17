@@ -4,6 +4,10 @@
 
 Simple Swift wrapper for accessing a `.sqlite3` database in a thread safe manner. 
 
+## License
+
+CLIKit is released under the MIT license. See `LICENSE` file for more detailed information.
+
 ## Example
 
 ```swift
