@@ -3,7 +3,9 @@
 //
 
 import Foundation
+#if !os(Linux)
 import os.log
+#endif
 import libsqlite3
 
 public class SQLStatement {
@@ -25,7 +27,11 @@ public class SQLStatement {
         let status = sqlite3_finalize(statementID)
         guard status == SQLITE_OK else {
             let message = errorMessage?.current ?? "Unknown error."
-            os_log("%@", log: .default, type: .error, "ERROR: Failed finalize statement: \(message)")
+            #if !os(Linux)
+            os_log("%@", log: .default, type: .error, "ERROR: Failed to finalize statement: \(message)")
+            #else
+            print("Error: Failed to finalize statement: \(message)")
+            #endif
             return
         }
     }

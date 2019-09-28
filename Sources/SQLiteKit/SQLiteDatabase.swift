@@ -3,7 +3,9 @@
 //
 
 import Foundation
+#if !os(Linux)
 import os.log
+#endif
 import libsqlite3
 
 internal class SQLiteDatabase: SQLDatabase {
@@ -136,7 +138,11 @@ internal class SQLiteDatabase: SQLDatabase {
                 }
             }
         } catch let error {
+            #if !os(Linux)
             os_log("%@", log: .default, type: .error, "Failed to fetch database schema. \(error)")
+            #else
+            print("Error: Failed to fetch database schema. \(error)")
+            #endif
         }
         return nil
     }
@@ -146,7 +152,11 @@ internal class SQLiteDatabase: SQLDatabase {
             let statement = try prepare(statement: "PRAGMA user_version = \(newVersion);")
             try statement.step()
         } catch let error {
+            #if !os(Linux)
             os_log("%@", log: .default, type: .error, "Failed to update database schema. \(error)")
+            #else
+            print("Error: Failed to update database schema. \(error)")
+            #endif
         }
     }
     
