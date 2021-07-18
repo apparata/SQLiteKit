@@ -8,7 +8,7 @@ import libsqlite3
 internal typealias SQLDatabaseID = OpaquePointer
 internal typealias SQLStatementID = OpaquePointer
 
-internal protocol SQLErrorMessage: class {
+internal protocol SQLErrorMessage: AnyObject {
     var current: String { get }
 }
 

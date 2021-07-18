@@ -5,7 +5,7 @@
 import Foundation
 
 /// The public interface to the database.
-public protocol SQLDatabase: class {
+public protocol SQLDatabase: AnyObject {
     
     /// Version number of the schema of the current database.
     /// A new schema version means something has changed in
