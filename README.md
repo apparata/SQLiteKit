@@ -22,19 +22,6 @@ the dependencies array:
 ```swift
 .package(url: "https://github.com/apparata/SQLiteKit.git", from: "<version>")
 ```
-If you are using Xcode 11 or newer, you can add SQLiteKit by entering the URL to the
-repository via the `File` menu:
-
-```
-File > Swift Packages > Add Package Dependency...
-```
-
-**Note:** SQLiteKit requires **Swift 5.1** or later.
-
-# Reference Documentation
-
-There is generated [reference documentation](https://apparata.github.io/SQLiteKit/SQLiteKit/)
-available.
 
 ## Example
 
@@ -76,4 +63,20 @@ do {
     dump(error)
     exit(1)
 }
+```
+
+## Declarative Table Query Example
+
+```
+let table = SQLTable("Cars") {
+    SQLColumn("brand", String.self).notNull()
+    SQLColumn("model", Int.self).notNull()
+    SQLColumn("doorCount", Int.self).notNull()
+    SQLColumn("weight", Double.self).notNull()
+}
+.primaryKey("brand", "model", onConflict: .replace)
+
+let query: SQLQuery = SQLQuery.createTable(table)
+
+print(query.string)
 ```

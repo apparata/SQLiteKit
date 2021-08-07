@@ -102,6 +102,10 @@ internal class SQLiteDatabase: SQLDatabase {
         try statement.step()
     }
 
+    public func execute(query: SQLQuery) throws {
+        try execute(sql: query.string, values: [])
+    }
+    
     internal func transaction(_ actions: (SQLDatabase) throws -> SQLTransactionResult) throws -> SQLTransactionResult {
         
         try execute(sql: "BEGIN EXCLUSIVE")
