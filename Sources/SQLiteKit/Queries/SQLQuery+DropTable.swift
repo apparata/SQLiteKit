@@ -6,7 +6,7 @@ import Foundation
 
 extension SQLQuery {
     
-    public static func dropTable(_ table: SQLTable, options: DropTableOptions = []) -> SQLQuery {
+    public static func dropTable(_ table: SQLTable, options: SQLDropOptions = []) -> SQLQuery {
         makeQuery {
             "DROP TABLE"
             if options.contains(.ifExists) { "IF EXISTS" }
@@ -19,18 +19,5 @@ extension SQLQuery {
                 ";"
             }
         }
-    }
-    
-    public struct DropTableOptions: OptionSet {
-        public let rawValue: Int
-        
-        public init(rawValue: Int) {
-            self.rawValue = rawValue
-        }
-        
-        public static let ifExists = Self(rawValue: 1 << 0)
-        public static let excludeSemicolon = Self(rawValue: 1 << 3)
-
-        public static let all: Self = [.ifExists, .excludeSemicolon]
     }
 }

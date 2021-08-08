@@ -21,8 +21,12 @@ public protocol SQLDatabase: AnyObject {
     /// for details.
     var lastInsertedRowID: Int64 { get }
     
+    // MARK: - Prepared Statements
+    
     /// Prepares an SQLStatement to be executed later.
     func prepare(statement sql: String) throws -> SQLStatement
+    
+    // MARK: - Execute
     
     /// Runs an SQL statement.
     /// Convenience wrapper around prepare, step, and finalize.
@@ -43,4 +47,64 @@ public protocol SQLDatabase: AnyObject {
     /// Convenience wrapper around prepare, bind, step, and finalize.
     /// This is not meant for SELECT queries as no result will be returned.
     func executeQuery(_ query: SQLQuery) throws
+    
+    // MARK: - Table Convenience
+    
+    /// Creates a table synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.createTable(table))
+    /// ```
+    func createTable(_ table: SQLTable) throws
+
+    /// Creates a table synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.createTable(table, options: options))
+    /// ```
+    func createTable(_ table: SQLTable, options: SQLCreateTableOptions) throws
+    
+    /// Drops a table synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.dropTable(table))
+    /// ```
+    func dropTable(_ table: SQLTable) throws
+    
+    /// Drops a table synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.dropTable(table, options: options))
+    /// ```
+    func dropTable(_ table: SQLTable, options: SQLDropOptions) throws
+    
+    // MARK: - View Convenience
+    
+    /// Creates a view synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.createView(view))
+    /// ```
+    func createView(_ view: SQLView) throws
+
+    /// Creates a view synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.createView(view, options: options))
+    /// ```
+    func createView(_ view: SQLView, options: SQLCreateViewOptions) throws
+
+    /// Drops a view synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.dropView(view))
+    /// ```
+    func dropView(_ view: SQLView) throws
+    
+    /// Drops a view synchronously.
+    /// This is the same as:
+    /// ```
+    /// executeQuery(SQLQuery.dropView(view, options: options))
+    /// ```
+    func dropView(_ view: SQLView, options: SQLDropOptions) throws
 }

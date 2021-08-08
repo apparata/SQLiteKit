@@ -6,7 +6,7 @@ import Foundation
 
 extension SQLQuery {
     
-    public static func createView(_ view: SQLView, options: CreateViewOptions = []) -> SQLQuery {
+    public static func createView(_ view: SQLView, options: SQLCreateViewOptions = []) -> SQLQuery {
         
         @SQLQueryStringBuilder
         func makeColumn(_ column: SQLTableColumn) -> SQLQueryString {
@@ -60,19 +60,4 @@ extension SQLQuery {
             }
         }
     }
-
-    public struct CreateViewOptions: OptionSet {
-        public let rawValue: Int
-        
-        public init(rawValue: Int) {
-            self.rawValue = rawValue
-        }
-        
-        public static let ifNotExists = Self(rawValue: 1 << 0)
-        public static let temporary = Self(rawValue: 1 << 1)
-        public static let excludeSemicolon = Self(rawValue: 1 << 3)
-
-        public static let all: Self = [.ifNotExists, .temporary, .excludeSemicolon]
-    }
-
 }
