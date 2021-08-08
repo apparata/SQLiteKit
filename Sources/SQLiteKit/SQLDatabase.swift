@@ -26,16 +26,21 @@ public protocol SQLDatabase: AnyObject {
     
     /// Runs an SQL statement.
     /// Convenience wrapper around prepare, step, and finalize.
-    /// This is not meant for queries as no result will be returned.
+    /// This is not meant for SELECT queries as no result will be returned.
     func execute(sql: String) throws
 
     /// Runs an SQL statement.
     /// Convenience wrapper around prepare, bind, step, and finalize.
-    /// This is not meant for queries as no result will be returned.
+    /// This is not meant for SELECT queries as no result will be returned.
     func execute(sql: String, values: SQLValue...) throws
     
     /// Runs an SQL statement.
     /// Convenience wrapper around prepare, bind, step, and finalize.
-    /// This is not meant for queries as no result will be returned.
+    /// This is not meant for SELECT queries as no result will be returned.
     func execute(sql: String, values: [SQLValue]) throws
+    
+    /// Runs an SQL statement represented by an `SQLQuery` object.
+    /// Convenience wrapper around prepare, bind, step, and finalize.
+    /// This is not meant for SELECT queries as no result will be returned.
+    func executeQuery(_ query: SQLQuery) throws
 }
