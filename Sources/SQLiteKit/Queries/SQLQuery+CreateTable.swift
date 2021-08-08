@@ -54,30 +54,37 @@ extension SQLQuery {
             } else {
                 "(\n"
                 makeColumns(table).joined(separator: ",\n ")
+                if let primaryKey = table.constraints.primaryKey {
+                    ", \n"
+                    "PRIMARY KEY ("
+                    primaryKey.columns
+                    ")"
+                    if let onConflict = primaryKey.onConflict {
+                        "ON CONFLICT"
+                        onConflict
+                    }
+                }
+                if let uniqueColumns = table.constraints.uniqueColumns {
+                    ", \n"
+                    "UNIQUE ("
+                    uniqueColumns.columns
+                    ")"
+                    if let onConflict = uniqueColumns.onConflict {
+                        "ON CONFLICT"
+                        onConflict
+                    }
+                }
+                if let checkExpression = table.constraints.check {
+                    ", \n"
+                    "CHECK ("
+                    checkExpression
+                    ")"
+                }
+
                 "\n)"
             }
-            if let primaryKey = table.constraints.primaryKey {
-                "PRIMARY KEY ("
-                primaryKey.columns
-                ")"
-                if let onConflict = primaryKey.onConflict {
-                    "ON CONFLICT"
-                    onConflict
-                }
-            }
-            if let uniqueColumns = table.constraints.uniqueColumns {
-                "UNIQUE ("
-                uniqueColumns.columns
-                ")"
-                if let onConflict = uniqueColumns.onConflict {
-                    "ON CONFLICT"
-                    onConflict
-                }
-            }
-            if let checkExpression = table.constraints.check {
-                "CHECK ("
-                checkExpression
-                ")"
+            if options.contains(.withoutRowID) {
+                "WITHOUT ROWID"
             }
             if !options.contains(.excludeSemicolon) {
                 ";"
