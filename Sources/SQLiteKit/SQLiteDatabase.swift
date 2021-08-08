@@ -102,7 +102,7 @@ internal class SQLiteDatabase: SQLDatabase {
         try statement.step()
     }
 
-    public func execute(query: SQLQuery) throws {
+    public func executeQuery(_ query: SQLQuery) throws {
         try execute(sql: query.string, values: [])
     }
     

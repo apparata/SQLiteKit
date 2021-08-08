@@ -17,7 +17,7 @@ public struct SQLTable {
     public private(set) var constraints: Constraints
     
     /// This SQLTable will be based on columns.
-    init(_ name: SQLTableName, @SQLTableBuilder columns: () -> [SQLTableColumn]) {
+    public init(_ name: SQLTableName, @SQLTableBuilder columns: () -> [SQLTableColumn]) {
         self.name = name
         self.columns = columns()
         selectStatement = nil
@@ -25,7 +25,7 @@ public struct SQLTable {
     }
     
     /// This SQLTable will be based on a select statement.
-    init(_ name: SQLTableName, as selectStatement: String) {
+    public init(_ name: SQLTableName, as selectStatement: String) {
         self.name = name
         columns = []
         self.selectStatement = selectStatement

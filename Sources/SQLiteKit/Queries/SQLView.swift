@@ -15,13 +15,13 @@ public struct SQLView {
     public let selectStatement: String
     public private(set) var schemaName: String?
     
-    init(_ name: SQLTableName, as selectStatement: String, @SQLTableBuilder columns: () -> [SQLTableColumn]) {
+    public init(_ name: SQLTableName, as selectStatement: String, @SQLTableBuilder columns: () -> [SQLTableColumn]) {
         self.name = name
         self.columns = columns()
         self.selectStatement = selectStatement
     }
 
-    init(_ name: SQLTableName, as selectStatement: String) {
+    public init(_ name: SQLTableName, as selectStatement: String) {
         self.name = name
         self.columns = []
         self.selectStatement = selectStatement
