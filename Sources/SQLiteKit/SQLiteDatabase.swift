@@ -41,7 +41,7 @@ internal class SQLiteDatabase: SQLDatabase {
     
     deinit {
         sqlite3_update_hook(db, nil, nil)
-        sqlite3_close(db)
+        sqlite3_close_v2(db)
     }
     
     public static func open(path: String) throws -> SQLiteDatabase {
