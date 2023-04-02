@@ -7,7 +7,7 @@ import Foundation
 extension SQLQuery {
     
     public static func dropView(_ view: SQLView, options: SQLDropOptions = []) -> SQLQuery {
-        makeQuery {
+        makeQuery { () -> SQLQuery in
             "DROP VIEW"
             if options.contains(.ifExists) { "IF EXISTS" }
             if let schema = view.schemaName {

@@ -7,7 +7,7 @@ import Foundation
 extension SQLQuery {
     
     public static func dropTable(_ table: SQLTable, options: SQLDropOptions = []) -> SQLQuery {
-        makeQuery {
+        makeQuery { () -> SQLQuery in
             "DROP TABLE"
             if options.contains(.ifExists) { "IF EXISTS" }
             if let schema = table.schemaName {

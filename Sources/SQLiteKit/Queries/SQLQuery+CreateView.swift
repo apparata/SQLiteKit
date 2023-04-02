@@ -39,7 +39,7 @@ extension SQLQuery {
             }
         }
         
-        return makeQuery {
+        return makeQuery { () -> SQLQuery in
             "CREATE"
             if options.contains(.temporary) { "TEMPORARY" }
             "VIEW"
