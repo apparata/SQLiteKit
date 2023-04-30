@@ -6,7 +6,7 @@ Simple Swift wrapper for accessing a `.sqlite3` database in a thread safe manner
 
 ## License
 
-SQLiteKit is released under the MIT license. See `LICENSE` file for more detailed information.
+SQLiteKit is public domain. See UNLICENSE file for details.
 
 # Table of Contents
 
