@@ -24,6 +24,8 @@ public class SQLQueue {
         self.database = database
     }
     
+    // MARK: - Run
+    
     /// Runs database actions asynchronously.
     public func run(actions: @escaping (SQLDatabase) throws -> Void) {
         run(actions: actions, completion: nil)
@@ -58,6 +60,8 @@ public class SQLQueue {
             try actions(database)
         }
     }
+    
+    // MARK: - Transaction
     
     /// Runs a database transaction asynchronously.
     public func transaction(actions: @escaping (SQLDatabase) throws -> SQLTransactionResult) {
@@ -96,5 +100,55 @@ public class SQLQueue {
             return result
         }
         return result
+    }
+    
+    // MARK: - Backup
+    
+    public func storeBackupSynchronously(to path: String, vacuum: Bool = false) throws {
+        try serialQueue.sync { [database] in
+            try database.storeBackup(to: path, vacuum: vacuum)
+        }
+    }
+    
+    public func storeBackup(to path: String, vacuum: Bool = false, completion: ((Result<(), SQLError>) -> Void)?) {
+        serialQueue.async { [weak self] in
+            guard let database = self?.database else {
+                return
+            }
+            do {
+                try database.storeBackup(to: path, vacuum: vacuum)
+            } catch let error as SQLError {
+                completion?(.failure(error))
+                return
+            } catch {
+                fatalError("SQLQueue run failed from unknown error.")
+            }
+            
+            completion?(.success(Void()))
+        }
+    }
+    
+    public func restoreBackupSynchronously(from path: String) throws {
+        try serialQueue.sync { [database] in
+            try database.restoreBackup(from: path)
+        }
+    }
+    
+    public func restoreBackup(from path: String, completion: ((Result<(), SQLError>) -> Void)?) {
+        serialQueue.async { [weak self] in
+            guard let database = self?.database else {
+                return
+            }
+            do {
+                try database.restoreBackup(from: path)
+            } catch let error as SQLError {
+                completion?(.failure(error))
+                return
+            } catch {
+                fatalError("SQLQueue run failed from unknown error.")
+            }
+            
+            completion?(.success(Void()))
+        }
     }
 }

@@ -188,12 +188,101 @@ internal class SQLiteDatabase: SQLDatabase {
     }
 }
 
+// MARK: - Backups
+
+extension SQLiteDatabase {
+    
+    /// Store a backup of the contents of the current database to a new SQLite DB file at path.
+    func storeBackup(to path: String, vacuum: Bool) throws {
+
+        if vacuum {
+            // This is slower than the backup API, but results in smaller file.
+            if FileManager.default.fileExists(atPath: path) {
+                // File must be removed first if it exists.
+                try FileManager.default.removeItem(atPath: path)
+            }
+            try execute(sql: "VACUUM main INTO ?;", values: .text(path))
+        } else {
+            // Use backup API. This is faster, but the file is bigger.
+            var backupDB: SQLDatabaseID? = nil
+            
+            let result = sqlite3_open(path, &backupDB)
+
+            guard result == SQLITE_OK, let backupDB else {
+                var message: String = "Failed to open backup database at \(path)"
+                if let backupDB {
+                    message = String(cString: sqlite3_errmsg(backupDB))
+                    sqlite3_close(backupDB)
+                }
+                throw SQLError.failedToOpenDatabase(code: result, message: message)
+            }
+            
+            let backup = sqlite3_backup_init(backupDB, "main", db, "main")
+            if backup != nil {
+                sqlite3_backup_step(backup, -1)
+                sqlite3_backup_finish(backup)
+                
+            }
+            let backupResult = sqlite3_errcode(backupDB)
+            guard backupResult == SQLITE_OK else {
+                var message: String = "Failed to make backup"
+                if let cMessage = sqlite3_errmsg(backupDB) {
+                    message = String(cString: cMessage)
+                }
+                sqlite3_close(backupDB)
+                throw SQLError.failedToOpenDatabase(code: backupResult, message: message)
+            }
+            
+            sqlite3_close(backupDB)
+        }
+    }
+    
+    func restoreBackup(from path: String) throws {
+        var backupDB: SQLDatabaseID? = nil
+        
+        let result = sqlite3_open(path, &backupDB)
+
+        guard result == SQLITE_OK, let backupDB else {
+            var message: String = "Failed to open backup database at \(path)"
+            if let backupDB {
+                if let cMessage = sqlite3_errmsg(backupDB) {
+                    message = String(cString: cMessage)
+                }
+                sqlite3_close(backupDB)
+            }
+            throw SQLError.failedToOpenDatabase(code: result, message: message)
+        }
+        
+        let backup = sqlite3_backup_init(db, "main", backupDB, "main")
+        if backup != nil {
+            sqlite3_backup_step(backup, -1)
+            sqlite3_backup_finish(backup)
+            
+        }
+        let backupResult = sqlite3_errcode(db)
+        guard backupResult == SQLITE_OK else {
+            var message: String = "Failed to make backup"
+            if let cMessage = sqlite3_errmsg(db) {
+                message = String(cString: cMessage)
+            }
+            sqlite3_close(backupDB)
+            throw SQLError.failedToOpenDatabase(code: backupResult, message: message)
+        }
+        
+        sqlite3_close(backupDB)
+    }
+}
+
+// MARK: - SQLErrorMessage
+
 extension SQLiteDatabase: SQLErrorMessage {
     
     var current: String {
         return errorMessage
     }
 }
+
+// MARK: - UpdateHook
 
 private class UpdateHook {
     let hook: (SQLUpdateType, _ table: String?, _ rowID: Int64) -> Void
