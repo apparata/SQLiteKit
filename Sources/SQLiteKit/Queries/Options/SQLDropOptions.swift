@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SQLDropOptions: OptionSet {
+public struct SQLDropOptions: OptionSet, Sendable {
     public let rawValue: Int
     
     public init(rawValue: Int) {
