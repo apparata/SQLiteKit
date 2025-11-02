@@ -1,24 +1,80 @@
 import Foundation
 
+/// A protocol representing a column in a SQL table.
 public protocol SQLTableColumn {
+    /// The name of the column.
     var name: String { get }
+    /// The data type of the column.
     var dataType: SQLColumnCompatibleType.Type { get }
+    /// Whether the column has a NOT NULL constraint.
     var notNullable: Bool { get }
+    /// The conflict resolution method for the NOT NULL constraint.
     var notNullableOnConflict: SQLConflictResolutionType? { get }
+    /// The default value for the column as a string.
     var defaultToAsString: String? { get }
+    /// The collation name for the column.
     var collationName: String? { get }
+    /// The expression for a generated column.
     var generatedAsExpression: SQLExpression? { get }
+    /// Whether the generated column is stored.
     var generatedAsStored: Bool { get }
 }
 
-// MARK: - SQLTable
+// MARK: - SQLColumn
 
+/// A declarative representation of a table column.
+///
+/// `SQLColumn` provides a type-safe way to define table columns with constraints.
+/// It's used within the ``SQLTable`` DSL to build table schemas.
+///
+/// ## Usage
+///
+/// Basic column definition:
+///
+/// ```swift
+/// SQLColumn("name", String.self)
+/// SQLColumn("age", Int.self)
+/// SQLColumn("weight", Double.self)
+/// ```
+///
+/// Column with constraints:
+///
+/// ```swift
+/// SQLColumn("id", Int.self).notNull()
+/// SQLColumn("email", String.self).notNull().defaultTo("unknown@example.com")
+/// SQLColumn("created_at", Int.self).defaultTo(SQLExpression("CURRENT_TIMESTAMP"))
+/// ```
+///
+/// ## Topics
+///
+/// ### Creating Columns
+/// - ``init(_:_:)``
+///
+/// ### Properties
+/// - ``name``
+/// - ``type``
+/// - ``constraints``
+///
+/// ### Constraints
+/// - ``notNull(onConflict:)``
+/// - ``defaultTo(_:)-7v8ht``
+/// - ``defaultTo(_:)-3s5zr``
+/// - ``collateUsing(_:)``
+/// - ``generatedAs(_:store:)``
 public struct SQLColumn<T: SQLColumnCompatibleType> {
-    
+
+    /// The name of the column.
     public let name: SQLColumnName
+    /// The Swift type of the column.
     public let type: T.Type
+    /// The column constraints.
     public private(set) var constraints: Constraints
-    
+
+    /// Creates a new column definition.
+    ///
+    /// - Parameters:
+    ///   - name: The name of the column.
+    ///   - type: The Swift type that corresponds to the SQLite column type.
     public init(_ name: SQLColumnName, _ type: T.Type) {
         self.name = name
         self.type = type

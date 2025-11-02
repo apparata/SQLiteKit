@@ -4,10 +4,63 @@ import os.log
 #endif
 import libsqlite3
 
+/// A prepared SQL statement that can be executed multiple times with different parameters.
+///
+/// `SQLStatement` represents a compiled SQL statement that can be bound with values
+/// and executed efficiently. Prepared statements are particularly useful when executing
+/// the same SQL statement multiple times with different parameters, as the SQL is compiled
+/// only once.
+///
+/// ## Usage
+///
+/// Prepare a statement:
+///
+/// ```swift
+/// let statement = try db.prepare(statement: "INSERT INTO users (name, age) VALUES (?, ?)")
+/// ```
+///
+/// Bind values and execute:
+///
+/// ```swift
+/// try statement.bind(values: .text("Alice"), .int(30))
+/// try statement.step()
+/// ```
+///
+/// Execute multiple times with different values:
+///
+/// ```swift
+/// try statement.resetBindAndStep(values: .text("Bob"), .int(25))
+/// try statement.resetBindAndStep(values: .text("Charlie"), .int(35))
+/// ```
+///
+/// - Note: The statement is automatically finalized when it's deallocated.
+///
+/// ## Topics
+///
+/// ### Binding Values
+/// - ``bind(values:)-9dy9k``
+/// - ``bind(values:)-9me7x``
+///
+/// ### Executing Statements
+/// - ``step()``
+/// - ``stepAllRows()``
+/// - ``reset()``
+///
+/// ### Convenience Methods
+/// - ``resetBindAndStep(values:)-8tsgv``
+/// - ``resetBindAndStep(values:)-6bmxm``
+/// - ``resetBindAndStepAllRows(values:)-920i5``
+/// - ``resetBindAndStepAllRows(values:)-5w9xb``
+///
+/// ### Result Types
+/// - ``StepResult``
 public class SQLStatement {
-    
+
+    /// The result of executing a statement step.
     public enum StepResult {
+        /// The statement has finished executing with no more rows.
         case done
+        /// The statement has produced a row of data.
         case row(SQLRow)
     }
     
@@ -32,10 +85,41 @@ public class SQLStatement {
         }
     }
 
+    /// Binds values to the prepared statement's parameters.
+    ///
+    /// This method binds the provided values to the statement's parameters in order.
+    /// The first value is bound to the first `?` placeholder, the second value to the
+    /// second `?` placeholder, and so on.
+    ///
+    /// - Parameter values: The values to bind to the statement's parameters.
+    /// - Throws: ``SQLError/failedToBindValueToStatement(code:message:)`` if binding fails.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "INSERT INTO users (name, age) VALUES (?, ?)")
+    /// try statement.bind(values: .text("Alice"), .int(30))
+    /// ```
     public func bind(values: SQLValue...) throws {
         try bind(values: values)
     }
-    
+
+    /// Binds an array of values to the prepared statement's parameters.
+    ///
+    /// This method binds the provided values to the statement's parameters in order.
+    /// The first value is bound to the first `?` placeholder, the second value to the
+    /// second `?` placeholder, and so on.
+    ///
+    /// - Parameter values: An array of values to bind to the statement's parameters.
+    /// - Throws: ``SQLError/failedToBindValueToStatement(code:message:)`` if binding fails.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "INSERT INTO users (name, age) VALUES (?, ?)")
+    /// let values: [SQLValue] = [.text("Alice"), .int(30)]
+    /// try statement.bind(values: values)
+    /// ```
     public func bind(values: [SQLValue]) throws {
         for index in 0..<values.count {
             let sqlIndex = Int32(index + 1)
@@ -63,7 +147,33 @@ public class SQLStatement {
             }
         }
     }
-    
+
+    /// Executes one step of the prepared statement.
+    ///
+    /// For statements that don't return data (INSERT, UPDATE, DELETE), this method
+    /// returns ``.done`` when the statement completes. For SELECT statements, it returns
+    /// ``.row(_)`` for each row of data, and ``.done`` when there are no more rows.
+    ///
+    /// - Returns: A ``StepResult`` indicating either completion or a row of data.
+    /// - Throws: ``SQLError/failedToStepStatement(code:message:)`` if the step operation fails.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "SELECT * FROM users WHERE age > ?")
+    /// try statement.bind(values: .int(18))
+    ///
+    /// while true {
+    ///     let result = try statement.step()
+    ///     switch result {
+    ///     case .done:
+    ///         break
+    ///     case .row(let row):
+    ///         let name: String? = row.value(name: "name")
+    ///         print("User: \(name ?? "unknown")")
+    ///     }
+    /// }
+    /// ```
     @discardableResult
     public func step() throws -> StepResult {
         let result = sqlite3_step(statementID)
@@ -76,7 +186,27 @@ public class SQLStatement {
             throw SQLError.failedToStepStatement(code: result, message: errorMessage?.current ?? "Failed to step statement.")
         }
     }
-    
+
+    /// Executes the statement and returns all rows at once.
+    ///
+    /// This is a convenience method that repeatedly calls ``step()`` until all rows
+    /// have been retrieved. It's suitable for queries that return a manageable number
+    /// of rows. For large result sets, consider using ``step()`` in a loop instead
+    /// to avoid loading all data into memory at once.
+    ///
+    /// - Returns: An array of ``SQLRow`` objects representing all rows returned by the query.
+    /// - Throws: ``SQLError/failedToStepStatement(code:message:)`` if the step operation fails.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "SELECT * FROM users")
+    /// let rows = try statement.stepAllRows()
+    /// for row in rows {
+    ///     let name: String? = row.value(name: "name")
+    ///     print("User: \(name ?? "unknown")")
+    /// }
+    /// ```
     public func stepAllRows() throws -> [SQLRow] {
         var rows = [SQLRow]()
         
@@ -88,25 +218,82 @@ public class SQLStatement {
                 rows.append(row)
             }
         }
-        
+
         return rows
     }
-    
+
+    /// Resets the prepared statement so it can be executed again.
+    ///
+    /// This method resets the statement to its initial state, allowing it to be
+    /// re-executed. Any previously bound parameter values remain bound.
+    ///
+    /// - Throws: ``SQLError/failedToResetStatement(code:message:)`` if the reset operation fails.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "SELECT * FROM users WHERE age > ?")
+    /// try statement.bind(values: .int(18))
+    /// let rows1 = try statement.stepAllRows()
+    ///
+    /// // Reset and execute again with the same bound values
+    /// try statement.reset()
+    /// let rows2 = try statement.stepAllRows()
+    /// ```
     public func reset() throws {
         let result = sqlite3_reset(statementID)
         guard result == SQLITE_OK else {
             throw SQLError.failedToResetStatement(code: result, message: errorMessage?.current ?? "Failed to reset statement.")
         }
     }
-    
+
     // MARK: - Convenience
-    
-    
+
+    /// Resets the statement, binds new values, and executes one step.
+    ///
+    /// This is a convenience method that combines ``reset()``, ``bind(values:)-9dy9k``,
+    /// and ``step()`` into a single call. It's useful for executing a prepared statement
+    /// multiple times with different parameter values.
+    ///
+    /// - Parameter values: The values to bind to the statement's parameters.
+    /// - Returns: A ``StepResult`` indicating either completion or a row of data.
+    /// - Throws: ``SQLError`` if any of the operations fail.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "INSERT INTO users (name, age) VALUES (?, ?)")
+    /// try statement.resetBindAndStep(values: .text("Alice"), .int(30))
+    /// try statement.resetBindAndStep(values: .text("Bob"), .int(25))
+    /// try statement.resetBindAndStep(values: .text("Charlie"), .int(35))
+    /// ```
     @discardableResult
     public func resetBindAndStep(values: SQLValue...) throws -> StepResult {
         return try resetBindAndStep(values: values)
     }
-    
+
+    /// Resets the statement, binds an array of new values, and executes one step.
+    ///
+    /// This is a convenience method that combines ``reset()``, ``bind(values:)-9me7x``,
+    /// and ``step()`` into a single call. It's useful for executing a prepared statement
+    /// multiple times with different parameter values.
+    ///
+    /// - Parameter values: An array of values to bind to the statement's parameters.
+    /// - Returns: A ``StepResult`` indicating either completion or a row of data.
+    /// - Throws: ``SQLError`` if any of the operations fail.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "INSERT INTO users (name, age) VALUES (?, ?)")
+    /// let users = [
+    ///     [SQLValue.text("Alice"), .int(30)],
+    ///     [SQLValue.text("Bob"), .int(25)]
+    /// ]
+    /// for user in users {
+    ///     try statement.resetBindAndStep(values: user)
+    /// }
+    /// ```
     @discardableResult
     public func resetBindAndStep(values: [SQLValue]) throws -> StepResult {
         try reset()
@@ -114,10 +301,44 @@ public class SQLStatement {
         return try step()
     }
 
+    /// Resets the statement, binds new values, and retrieves all rows.
+    ///
+    /// This is a convenience method that combines ``reset()``, ``bind(values:)-9dy9k``,
+    /// and ``stepAllRows()`` into a single call. It's useful for executing a SELECT
+    /// statement multiple times with different parameter values.
+    ///
+    /// - Parameter values: The values to bind to the statement's parameters.
+    /// - Returns: An array of ``SQLRow`` objects representing all rows returned by the query.
+    /// - Throws: ``SQLError`` if any of the operations fail.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "SELECT * FROM users WHERE age > ?")
+    /// let youngUsers = try statement.resetBindAndStepAllRows(values: .int(18))
+    /// let olderUsers = try statement.resetBindAndStepAllRows(values: .int(30))
+    /// ```
     public func resetBindAndStepAllRows(values: SQLValue...) throws -> [SQLRow] {
         return try resetBindAndStepAllRows(values: values)
     }
 
+    /// Resets the statement, binds an array of new values, and retrieves all rows.
+    ///
+    /// This is a convenience method that combines ``reset()``, ``bind(values:)-9me7x``,
+    /// and ``stepAllRows()`` into a single call. It's useful for executing a SELECT
+    /// statement multiple times with different parameter values.
+    ///
+    /// - Parameter values: An array of values to bind to the statement's parameters.
+    /// - Returns: An array of ``SQLRow`` objects representing all rows returned by the query.
+    /// - Throws: ``SQLError`` if any of the operations fail.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let statement = try db.prepare(statement: "SELECT * FROM users WHERE age > ?")
+    /// let youngUsers = try statement.resetBindAndStepAllRows(values: [.int(18)])
+    /// let olderUsers = try statement.resetBindAndStepAllRows(values: [.int(30)])
+    /// ```
     public func resetBindAndStepAllRows(values: [SQLValue]) throws -> [SQLRow] {
         try reset()
         try bind(values: values)
