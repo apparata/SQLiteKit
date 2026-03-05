@@ -1,8 +1,8 @@
 # SQLiteKit
 
-[![Swift](https://img.shields.io/badge/Swift-5.10+-orange.svg)](https://swift.org)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20iOS%20%7C%20tvOS%20%7C%20visionOS-lightgrey.svg)](https://developer.apple.com)
-[![License](https://img.shields.io/badge/License-0BSD-blue.svg)](LICENSE)
+![Swift](https://img.shields.io/badge/Swift-5.10+-orange.svg)
+![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20iOS%20%7C%20tvOS%20%7C%20visionOS-lightgrey.svg)
+![License](https://img.shields.io/badge/License-0BSD-blue.svg)
 
 A simple, thread-safe Swift wrapper for accessing SQLite databases.
 
